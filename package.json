@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-username/node-red-contrib-transform-switch.git"
+    "url": "https://github.com/mykyta-k1/node-red-contrib-transform-switch"
   },
   "keywords": [
     "node-red",
@@ -21,7 +21,7 @@
     "flow-control",
     "data-processing"
   ],
-  "author": "Your Name <your.email@example.com>",
+  "author": "Mykyta",
   "license": "MIT",
   "dependencies": {
     "lodash": "^4.17.21"
