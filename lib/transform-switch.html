@@ -1,0 +1,212 @@
+<!-- Edit dialog template for the transform-switch node -->
+<script type="text/html" data-template-name="transform-switch">
+    <!-- Dynamic list of operations. Each item = one output port. -->
+    <div class="form-row">
+        <label><i class="fa fa-list"></i> Operations</label>
+        <ol id="node-input-operations-container"></ol>
+    </div>
+
+    <!-- Node name — always last -->
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name" />
+    </div>
+</script>
+
+<!-- Sidebar help text -->
+<script type="text/html" data-help-name="transform-switch">
+    <p>
+        Applies multiple independent transformations to a single incoming
+        message.
+    </p>
+    <p>
+        Each operation receives a <strong>deep copy</strong> of the original
+        message and produces an independent output on its own port. The number
+        of output ports equals the number of configured operations.
+    </p>
+    <h3>Operations</h3>
+    <dl class="message-properties">
+        <dt>Set</dt>
+        <dd>Sets <code>target</code> field to a static <code>value</code>.</dd>
+        <dt>Delete</dt>
+        <dd>Removes the <code>target</code> field from the message.</dd>
+        <dt>Move</dt>
+        <dd>
+            Moves value from <code>from</code> field to <code>to</code> field.
+        </dd>
+        <dt>Change</dt>
+        <dd>
+            Replaces a substring in <code>from</code> field:
+            <code>search</code> → <code>replace</code>.
+        </dd>
+    </dl>
+</script>
+
+<!-- Node registration and edit dialog logic -->
+<script type="text/javascript">
+    RED.nodes.registerType("transform-switch", {
+        category: "function",
+        color: "#2D9596",
+
+        defaults: {
+            name: { value: "" },
+            operations: { value: [] }, // array of operation objects
+        },
+
+        inputs: 1,
+        outputs: 1, // updated dynamically on save
+
+        icon: "swap.svg",
+
+        label: function () {
+            return this.name || "transform-switch";
+        },
+
+        labelStyle: function () {
+            return this.name ? "node_label_italic" : "";
+        },
+
+        outputLabels: function (index) {
+            // show operation type and target field as port label
+            const op = (this.operations || [])[index];
+            return op
+                ? op.type === "passthrough"
+                    ? "original"
+                    : `${op.type}: ${op.target || op.from || ""}`
+                : index;
+        },
+
+        oneditprepare: function () {
+            $("#node-input-operations-container").editableList({
+                sortable: true,
+                removable: true,
+
+                // renders one row per operation
+                addItem: function (container, index, data) {
+                    const row = $("<div>").css({
+                        display: "flex",
+                        gap: "6px",
+                        alignItems: "center",
+                    });
+
+                    // operation type selector
+                    const typeSelect = $("<select>")
+                        .css("width", "90px")
+                        .append(
+                            $("<option>").val("set").text("Set"),
+                            $("<option>").val("delete").text("Delete"),
+                            $("<option>").val("move").text("Move"),
+                            $("<option>").val("change").text("Change"),
+                            $("<option>")
+                                .val("passthrough")
+                                .text("Pass through"),
+                        );
+
+                    // field A: target (set/delete) or from (move/change)
+                    const fieldA = $("<input>")
+                        .attr("type", "text")
+                        .attr("data-field", "a")
+                        .attr("placeholder", "msg.payload.field")
+                        .css("flex", "1");
+
+                    // field B: value (set), to (move), replace (change) — hidden for delete
+                    const fieldB = $("<input>")
+                        .attr("type", "text")
+                        .attr("data-field", "b")
+                        .attr("placeholder", "value / target")
+                        .css("flex", "1");
+
+                    // field C: search string — visible only for change
+                    const fieldC = $("<input>")
+                        .attr("type", "text")
+                        .attr("data-field", "c")
+                        .attr("placeholder", "search for")
+                        .css("flex", "1");
+
+                    // update field visibility and placeholders based on selected type
+                    function updateFields() {
+                        const t = typeSelect.val();
+                        fieldB.toggle(t !== "delete");
+                        fieldC.toggle(t === "change");
+
+                        fieldB.attr(
+                            "placeholder",
+                            t === "set"
+                                ? "value"
+                                : t === "move"
+                                  ? "msg.payload.newField"
+                                  : t === "change"
+                                    ? "replace with"
+                                    : "",
+                        );
+                    }
+
+                    typeSelect.on("change", updateFields);
+
+                    // restore saved values if editing an existing operation
+                    if (data && data.type) {
+                        typeSelect.val(data.type);
+                        fieldA.val(data.target || data.from || "");
+                        fieldB.val(data.value || data.to || data.replace || "");
+                        fieldC.val(data.search || "");
+                    }
+
+                    updateFields(); // apply visibility on initial render
+
+                    // order in DOM: field → value/target → search (change only)
+                    row.append(typeSelect, fieldA, fieldB, fieldC);
+                    container.append(row);
+                },
+            });
+
+            // load existing saved operations into the list
+            (this.operations || []).forEach((op) => {
+                $("#node-input-operations-container").editableList(
+                    "addItem",
+                    op,
+                );
+            });
+        },
+
+        oneditsave: function () {
+            const ops = [];
+
+            $("#node-input-operations-container")
+                .editableList("items")
+                .each(function () {
+                    const type = $(this).find("select").val();
+                    // read by data-field attribute — independent of DOM order
+                    const fieldA = $(this).find("[data-field='a']").val();
+                    const fieldB = $(this).find("[data-field='b']").val();
+                    const fieldC = $(this).find("[data-field='c']").val();
+
+                    // build correct object structure per operation type
+                    switch (type) {
+                        case "set":
+                            ops.push({ type, target: fieldA, value: fieldB });
+                            break;
+                        case "delete":
+                            ops.push({ type, target: fieldA });
+                            break;
+                        case "move":
+                            ops.push({ type, from: fieldA, to: fieldB });
+                            break;
+                        case "change":
+                            ops.push({
+                                type,
+                                from: fieldA,
+                                search: fieldC,
+                                replace: fieldB,
+                            });
+                            break;
+                        case "passthrough":
+                            ops.push({ type });
+                            break;
+                    }
+                });
+
+            this.operations = ops;
+            this.outputs = ops.length || 1; // min 1 to avoid broken node
+        },
+    });
+</script>

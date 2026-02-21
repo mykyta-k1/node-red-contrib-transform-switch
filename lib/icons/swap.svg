@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60" fill="none">
+  <!-- Background circle -->
+  <circle cx="30" cy="30" r="28" fill="#1a1a2e" stroke="#2D9596" stroke-width="1.5"/>
+
+  <!-- Input arrow (left) -->
+  <line x1="4" y1="30" x2="16" y2="30" stroke="#2D9596" stroke-width="2" stroke-linecap="round"/>
+  <polygon points="13,26 18,30 13,34" fill="#2D9596"/>
+
+  <!-- Central node dot -->
+  <circle cx="24" cy="30" r="3" fill="#2D9596"/>
+
+  <!-- Output lines fanning out to 3 ports -->
+  <!-- top -->
+  <line x1="27" y1="28" x2="42" y2="16" stroke="#4ecdc4" stroke-width="1.8" stroke-linecap="round"/>
+  <circle cx="45" cy="14" r="2.5" fill="#4ecdc4"/>
+
+  <!-- middle -->
+  <line x1="27" y1="30" x2="43" y2="30" stroke="#4ecdc4" stroke-width="1.8" stroke-linecap="round"/>
+  <circle cx="46" cy="30" r="2.5" fill="#4ecdc4"/>
+
+  <!-- bottom -->
+  <line x1="27" y1="32" x2="42" y2="44" stroke="#4ecdc4" stroke-width="1.8" stroke-linecap="round"/>
+  <circle cx="45" cy="46" r="2.5" fill="#4ecdc4"/>
+
+  <!-- Small transform symbol on central node -->
+  <text x="22" y="48" font-size="7" fill="#2D9596" font-family="monospace" opacity="0.6">f(x)</text>
+</svg>
