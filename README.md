@@ -6,9 +6,6 @@ A Node-RED node that combines data transformation and flow routing. It allows yo
 
 Using standard `change` nodes often requires transforming the same field into various results. As the number of these intermediate "mapping" operations increases, the flow becomes cluttered with numerous components. While moving these into sub-flows is a possible workaround, it merely delegates the complexity rather than solving the underlying structural issue.
 
-### Example
-![example](../assets/p7/example.png)
-
 ## The Idea
 
 The `transform-switch` node integrates the logic of `change` (transformation) and `switch` (conditional routing) nodes into a single component.
